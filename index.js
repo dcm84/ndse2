@@ -3,94 +3,32 @@ require('dotenv').config()
 
 const express = require('express');
 const cors = require('cors');
-const formData = require("express-form-data");
+const bodyParser = require("body-parser");
 
-const { Book } = require('./models');
-const store = {
-    books: [],
-};
+//middleware с обработкой ошибок
+const error404Middleware = require('./middleware/error404');
+const error500Middleware = require('./middleware/error500');
 
-//немного демо-данных для теста
-[1, 2, 3].map(el => {
-    const newBook = new Book(`Book # ${el}`, `description for book # ${el}`);
-    store.books.push(newBook);
-});
+//routes
+const userRouter = require('./routes/user');
+const booksRouter = require('./routes/books');
 
 const app = express();
 
-app.use(formData.parse());
 app.use(cors());
 
-app.post(['/login/', '/api/user/'], (req, res) => {
-    res.status(201);
-    res.json({ id: 1, mail: "test@mail.ru" });
-});
+//статический маршрут
+app.use('/public', express.static(__dirname + "/public"));
 
-app.get('/api/books/', (req, res) => {
-    res.json(store.books);
-});
+//маршруты api
+app.use('/api/user', userRouter);
+app.use('/api/books', booksRouter);
 
-app.get('/api/books/:id', (req, res) => {
-    const { books } = store;
-    const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
+//обработчики ошибок
+app.use(error404Middleware);
+app.use(error500Middleware);
 
-    if (idx !== -1) {
-        res.json(books[idx]);
-    } else {
-        res.status(404);
-        res.json("Такой книги у нас нет!");
-    }
-});
-
-app.post('/api/books/', (req, res) => {
-    const { books } = store;
-    const { title, desc, authors, favorite, fileCover, fileName } = req.body;
-
-    const newBook = new Book(title, desc, authors, favorite, fileCover, fileName);
-    books.push(newBook);
-
-    res.status(201);
-    res.json(newBook);
-});
-
-app.put('/api/books/:id', (req, res) => {
-    const { books } = store;
-    const { title, desc, authors, favorite, fileCover, fileName } = req.body;
-    const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
-
-    if (idx !== -1) {
-        books[idx] = {
-            ...books[idx],
-            title,
-            desc,
-            authors,
-            favorite,
-            fileCover,
-            fileName
-        };
-        res.json(books[idx]);
-    } else {
-        res.status(404);
-        res.json("Такой книги у нас нет!");
-    }
-});
-
-app.delete('/api/books/:id', (req, res) => {
-    const { books } = store;
-    const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
-
-    if (idx !== -1) {
-        books.splice(idx, 1);
-        res.json("ok");
-    } else {
-        res.status(404);
-        res.json("Такой книги у нас нет!");
-    }
-});
-
+//стартуем сервер
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Сервер работает на порту ${PORT}`);
