@@ -1,0 +1,97 @@
+Задание 3 - Volumes
+
+Используя Docker CLI выполните следующие действия:
+
+1. Загрузите образ node версии 15.14
+- такой версии на докер хабе нет, загрузил 16.15
+
+docker pull node:16.15
+
+16.15: Pulling from library/node
+b03a94565ecb: Pull complete
+ae7bcede80b1: Pull complete
+37471fc83c2d: Pull complete
+0162432a49c0: Pull complete
+7ee8ddc463fd: Pull complete
+8a2cf2e19c09: Pull complete
+753048161912: Pull complete
+79eb823c93b6: Pull complete
+4d18fc86507f: Pull complete
+Digest: sha256:1817bb941c9a30fe2a6d75ff8675a8f6def408efe3d3ff43dbb006e2b534fa14
+Status: Downloaded newer image for node:16.15
+docker.io/library/node:16.15
+
+
+2. Запустите контейнер с именем first_node из образа node версии 16.15 в фоновом режиме, подключив папку data из текущей директории в /var/first/data контейнера
+
+[windows PowerShell only]
+docker run --name first_node -v ${PWD}/data:/var/first/data -i -d node:16.15
+
+cd39b41acad3ce058e0f464e0aab7486cdca6349c9c4933f30c696a5876e43eb
+
+3. Запустите контейнер с именем second_node из образа node версии 16.15 в фоновом режиме, подключив папку data из текущей директории в /var/second/data контейнера
+
+docker run --name second_node -v ${PWD}/data:/var/second/data -i -d node:16.15
+
+a41e15ca895916dc1921a23cec7f814204956c6e6de735d4e3ce6ecdbb8547c8
+
+4. Подключитесь к контейнеру first_node с помощью exec и создайте текстовый файл любого содержания в /var/first/data
+
+docker exec -it first_node /bin/bash
+root@cd39b41acad3:/# cd /var/first/data
+root@cd39b41acad3:/var/first/data# echo "hello" > hello.txt
+root@cd39b41acad3:/var/first/data# ls
+hello.txt
+root@cd39b41acad3:/var/first/data# exit
+exit
+
+5. Добавьте еще один файл в папку data на хостовой машине
+
+"host" > data/host.txt
+dir data
+
+    Каталог: ...data
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        21.05.2022      1:04              6 hello.txt
+-a----        21.05.2022      1:05             14 host.txt
+
+
+6. Подключитесь к контейнеру second_node с помощью exec и получите список файлов в директории /var/second/data, выведете на экран содержимое файлов
+
+docker exec -it second_node /bin/bash
+root@a41e15ca8959:/# cd /var/second/data
+root@a41e15ca8959:/var/second/data# ls
+hello.txt  host.txt
+root@a41e15ca8959:/var/second/data# exit
+exit
+
+7. Остановите оба контейнера
+
+docker stop first_node second_node
+first_node
+second_node
+
+8. Удалите оба контейнера
+
+docker rm first_node second_node
+first_node
+second_node
+
+9. Удалите образ node версии 16.15
+
+docker rmi node:16.15
+Untagged: node:16.15
+Untagged: node@sha256:1817bb941c9a30fe2a6d75ff8675a8f6def408efe3d3ff43dbb006e2b534fa14
+Deleted: sha256:5f9d246cdc072b7b7fa8e905328bed8cb56f48f2780fec675b0cf9b94994b33e
+Deleted: sha256:d46af14c368ee87646f1082da7654c1d2674a3df5bc01fc5e9414ef879d73248
+Deleted: sha256:84d70c9e6d5a65dec1a03253ff1ddf5f7ed491de03246b4ae58239718e00123b
+Deleted: sha256:eb88644da6a9d86e3c8665412a225c8807f5a6bf1c1dc42f37b47fc9821d4928
+Deleted: sha256:e9201151398afeb3722377a307c7d6d16a066a872e8d763a56348ef4386f3ab7
+Deleted: sha256:29ff62186bd23d67173aab5fbd8348cba0ee625a215df1adddc4f734a22a2731
+Deleted: sha256:b7bc28fd4dda69379925b613a911f4187d315b720da812dc5e31c46f3d1e3c9b
+Deleted: sha256:1160addaff5032598643b7d39480000cb4396d634483468db7b83cba930a766a
+Deleted: sha256:97d25c6f4e80114612ec5a97936b5f8694df5a748b51b9b7ab97b1fba80da623
+Deleted: sha256:f70b727d55c3bf3e37ab16d9d40bc5f5dd209f01a5514af0146547d3f3eaca60

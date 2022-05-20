@@ -1,0 +1,54 @@
+Задание 2 - Environment Variables
+
+Используя Docker CLI выполните следующие действия:
+
+1. Загрузите образ node версии 15.14
+
+такой версии на докер хабе нет, загрузил 16.15
+
+docker pull node:16.15
+16.15: Pulling from library/node
+b03a94565ecb: Pull complete
+ae7bcede80b1: Pull complete
+37471fc83c2d: Pull complete
+0162432a49c0: Pull complete
+7ee8ddc463fd: Pull complete
+8a2cf2e19c09: Pull complete
+753048161912: Pull complete
+79eb823c93b6: Pull complete
+4d18fc86507f: Pull complete
+Digest: sha256:1817bb941c9a30fe2a6d75ff8675a8f6def408efe3d3ff43dbb006e2b534fa14
+Status: Downloaded newer image for node:16.15
+docker.io/library/node:16.15
+
+2. Запустите контейнер node в интерактивном режиме подключения терминала, поименуйте его mynode, передайте две переменные среды NAME=<ваше имя> и SURNAME=<ваша фамилия>
+
+docker run --name mynode --env NAME=Sergey --env SURNAME=Sergeev -it node:16.15 /bin/bash
+root@208a57756714:/#
+
+3. В интерактивной среде выполнения node выполните скрипт, который выведет на экран приветсвтие: Привет, <ваше имя> <ваша фамилия>!, эти данные должны быть получены из переменных среды
+
+root@208a57756714:/# node
+Welcome to Node.js v16.15.0.
+Type ".help" for more information.
+> console.log(`Привет, ${process.env.NAME} ${process.env.SURNAME}!`)
+Привет, Sergey Sergeev!
+
+4. Остановите контейнер
+
+[Ctrl+ D]
+root@208a57756714:/# exit
+exit
+
+5. Удалите образ node версии 16.15
+
+docker rmi -f node:16.15
+Untagged: node:16.15
+Untagged: node@sha256:1817bb941c9a30fe2a6d75ff8675a8f6def408efe3d3ff43dbb006e2b534fa14
+Deleted: sha256:5f9d246cdc072b7b7fa8e905328bed8cb56f48f2780fec675b0cf9b94994b33e
+
+docker rm mynode
+mynode
+
+docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED       STATUS                   PORTS                NAMES
