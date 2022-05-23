@@ -10,19 +10,28 @@ const error404Middleware = require('./middleware/error404');
 const error500Middleware = require('./middleware/error500');
 
 //routes
-const userRouter = require('./routes/user');
+const indexRouter = require('./routes/index');
 const booksRouter = require('./routes/books');
+const apiUserRouter = require('./routes/api/user');
+const apiBooksRouter = require('./routes/api/books');
 
 const app = express();
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false}));
 app.use(cors());
+
+app.set("view engine", "ejs");
 
 //статический маршрут
 app.use('/public', express.static(__dirname + "/public"));
 
+//маршруты ejs
+app.use('/', indexRouter);
+app.use('/books', booksRouter);
+
 //маршруты api
-app.use('/api/user', userRouter);
-app.use('/api/books', booksRouter);
+app.use('/api/user', apiUserRouter);
+app.use('/api/books', apiBooksRouter);
 
 //обработчики ошибок
 app.use(error404Middleware);

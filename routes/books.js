@@ -15,7 +15,40 @@ const store = {
 });
 
 router.get('/', (req, res) => {
-    res.json(store.books);
+    const { books } = store;
+    res.render("books/index", {
+        title: "Library",
+        books
+    });
+});
+
+router.get('/create', (req, res) => {
+    res.render("books/create", {
+        title: "Добавление книги",
+        book: {},
+    });
+});
+
+router.post('/create', fileMiddleware.fields([
+    { name: 'cover-img', maxCount: 1 },
+    { name: 'book-file', maxCount: 1 }
+]), (req, res) => {
+    const { books } = store;
+    const { title, desc, authors, favorite } = req.body;
+
+    if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
+        const newBook = new Book(
+            title, desc, authors, favorite,
+            req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
+            req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+        );
+        books.push(newBook);
+        res.redirect('/books')
+    } else {
+        res.status(500).render("errors/500", {
+            error: "Обязательно загрузите хотя бы обложку, файл книги и ее название"
+        });
+    }
 });
 
 router.get('/:id', (req, res) => {
@@ -24,37 +57,31 @@ router.get('/:id', (req, res) => {
     const idx = books.findIndex(el => el.id === id);
 
     if (idx !== -1) {
-        res.json(books[idx]);
+            res.render("books/view", {
+            title: "Просмотр информации о книге",
+            book: books[idx],
+        });
     } else {
-        res.status(404);
-        res.json({ error: "Такой книги у нас нет!" });
+        res.status(404).redirect('/404');
     }
 });
 
-router.post('/', fileMiddleware.fields([
-    { name: 'cover-img', maxCount: 1 },
-    { name: 'book-file', maxCount: 1 }
-]), (req, res) => {
+router.get('/update/:id', (req, res) => {
     const { books } = store;
-    const { title, desc, authors, favorite } = req.body;
+    const { id } = req.params;
+    const idx = books.findIndex(el => el.id === id);
 
-    if (req.files && title.trim() != "") {
-        const newBook = new Book(
-            title, desc, authors, favorite,
-            req.files['cover-img'][0]['path'],
-            req.files['book-file'][0]['path']
-        );
-        books.push(newBook);
-
-        res.status(201);
-        res.json(newBook);
+    if (idx !== -1) {
+        res.render("books/update", {
+            title: "Редактирование книги",
+            book: books[idx],
+        });
     } else {
-        res.status(500);
-        res.json({ error: "Обязательно загрузите хотя бы обложку, файл книги и ее название" });
+        res.status(404).redirect('/404');
     }
 });
 
-router.put('/:id', fileMiddleware.fields([
+router.post('/update/:id', fileMiddleware.fields([
     { name: 'cover-img', maxCount: 1 },
     { name: 'book-file', maxCount: 1 }
 ]), (req, res) => {
@@ -64,7 +91,7 @@ router.put('/:id', fileMiddleware.fields([
     const idx = books.findIndex(el => el.id === id);
 
     if (idx !== -1) {
-        if (req.files && title.trim() != "") {
+        if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
             if (books[idx].fileCover) {
                 fs.unlink(books[idx].fileCover, (err => {}));
             }
@@ -78,23 +105,23 @@ router.put('/:id', fileMiddleware.fields([
                 desc,
                 authors,
                 favorite,
-                fileCover: req.files['cover-img'][0]['path'],
-                fileBook: req.files['book-file'][0]['path']
+                fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
+                fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
             };
 
-            res.json(books[idx]);
+            res.redirect(`/books/${id}`);
         } else {
-            res.status(500);
-            res.json({ error: "Обязательно загрузите хотя бы обложку, файл книги и ее название" });
+            res.status(500).render("errors/500", {
+                error: "Обязательно загрузите хотя бы обложку, файл книги и ее название"
+            });
         }
 
     } else {
-        res.status(404);
-        res.json({ error: "Такой книги у нас нет!" });
+        res.status(404).redirect('/404');
     }
 });
 
-router.delete('/:id', (req, res) => {
+router.post('/delete/:id', (req, res) => {
     const { books } = store;
     const { id } = req.params;
     const idx = books.findIndex(el => el.id === id);
@@ -108,10 +135,9 @@ router.delete('/:id', (req, res) => {
         }
 
         books.splice(idx, 1);
-        res.json("ok");
+        res.redirect(`/books`);
     } else {
-        res.status(404);
-        res.json({ error: "Такой книги у нас нет!" });
+        res.status(404).redirect('/404');
     }
 });
 
@@ -121,13 +147,9 @@ router.get('/:id/download', (req, res) => {
     const idx = books.findIndex(el => el.id === id);
 
     if (idx !== -1 && books[idx].fileBook) {
-        res.download(__dirname + '/../' + books[idx].fileBook, books[idx].title + books[idx].fileBook.replace(/.*(\.[a-z0-9]+)$/, "$1"), err => {
-            if (err) {
-                res.status(404).json({ error: "Ошибка выгрузки файла" });
-            }
-        });
+        res.download(__dirname + '/../' + books[idx].fileBook, books[idx].title + books[idx].fileBook.replace(/.*(\.[a-z0-9]+)$/, "$1"), err => {});
     } else {
-        res.status(404).json({ error: "Файл не найден!" });
+        res.status(404).redirect('/404');
     }
 
 });

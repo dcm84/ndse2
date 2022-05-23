@@ -1,0 +1,63 @@
+<form method="POST" class="mt-5" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="inputTitle">Заголовок</label>
+        <input type="text"
+               value="<%= book.title %>"
+               name="title"
+               class="form-control"
+               id="inputTitle">
+    </div>
+
+    <div class="form-group">
+        <label for="inputDesc">Описание</label>
+        <textarea
+                rows="3"
+                name="desc"
+                class="form-control"
+                id="inputDesc"
+        ><%= book.description %></textarea>
+    </div>
+    <div class="form-group">
+        <label for="inputAuthors">Авторы</label>
+        <textarea
+                rows="3"
+                name="authors"
+                class="form-control"
+                id="inputAuthors"
+        ><%= book.authors %></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="inputFavorite">Избранное</label>
+        <textarea
+                rows="3"
+                name="favorite"
+                class="form-control"
+                id="inputFavorite"
+        ><%= book.favorite %></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="inputCover">Обложка</label>
+        <% if (book.fileCover) { %>
+            <p class="card-text">
+                <img src="/<%= book.fileCover %>" width="50%"/>
+            </p>
+        <% } %>
+        <input type="file" accept=".png,.jpg,.jpeg" class="form-control" name="cover-img" id="inputCover">
+    </div>
+
+    <div class="form-group">
+        <label for="inputBook">Файл</label>
+        <% if (book.fileBook) { %>
+            <p>Загружен файл <a class="btn btn-sm btn-primary" href="/books/<%= book.id %>/download">
+                <%= book.fileBook %>
+            </a></p>
+        <% } %>
+        <input type="file" accept=".pdf,.doc,.docx,.txt" class="form-control" name="book-file" id="inputBook">
+    </div>
+
+    <div class="form-group text-right ">
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </div>
+</form>
