@@ -1,7 +1,12 @@
 const fs = require('fs');
+const request  = require('request')
 const express = require('express');
 const router = express.Router();
 const fileMiddleware = require('../middleware/file');
+
+const COUNTER_URL = process.env.COUNTER_URL || "http://localhost";
+const COUNTER_PORT = process.env.COUNTER_PORT || 3001;
+console.log(`Ищу счетчик ${COUNTER_URL} : ${COUNTER_PORT}`)
 
 const { Book } = require('../models');
 const store = {
@@ -57,10 +62,28 @@ router.get('/:id', (req, res) => {
     const idx = books.findIndex(el => el.id === id);
 
     if (idx !== -1) {
-            res.render("books/view", {
-            title: "Просмотр информации о книге",
-            book: books[idx],
-        });
+        let cbook = books[idx]
+        let bookURL = COUNTER_URL + ":" + COUNTER_PORT + '/' + cbook['id'] + '/incr'
+
+        request.post(
+            bookURL,
+            {},
+            function (error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    let parsedData = JSON.parse(body)
+                    cbook['cnt'] = parsedData['value'] !=null ? parsedData['value'] : 0
+                    res.render("books/view", {
+                        title: "Просмотр информации о книге",
+                        book: books[idx],
+                    });
+                }
+                else {
+                    res.status(500).render("errors/500", {
+                        error: "Ошибка связи со счетчиком посещений"
+                    });
+                }
+            }
+        );
     } else {
         res.status(404).redirect('/404');
     }

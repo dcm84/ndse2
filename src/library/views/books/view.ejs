@@ -9,8 +9,12 @@
         <div class="card">
             <div class="card-body">
 
-                <h5 class="card-title">
+                <h4 class="card-title">
                     <%= book.title %>
+                </h4>
+
+                <h5 class="card-title red">
+                    Эту книгу просмотрело: <mark><%= book.cnt %></mark>
                 </h5>
 
                 <% if (book.description) { %>

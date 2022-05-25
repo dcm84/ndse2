@@ -1,0 +1,10 @@
+FROM node:18.2
+
+WORKDIR /app
+
+ARG NODE_ENV=production
+COPY package*.json ./
+RUN npm install
+COPY src/library/ ./
+
+CMD [ "node", "index.js"]

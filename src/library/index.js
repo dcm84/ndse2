@@ -1,7 +1,5 @@
-//читаем окружение (можно и через скрипт dev)
-require('dotenv').config()
-
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const bodyParser = require("body-parser");
 
@@ -16,11 +14,14 @@ const apiUserRouter = require('./routes/api/user');
 const apiBooksRouter = require('./routes/api/books');
 
 const app = express();
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false}));
 app.use(cors());
 
+//настраиваем ejs
 app.set("view engine", "ejs");
+app.set('views', path.join(__dirname, 'views'));  //для того, чтобы обеспечить запуск не из корня проекта
 
 //статический маршрут
 app.use('/public', express.static(__dirname + "/public"));
@@ -38,7 +39,7 @@ app.use(error404Middleware);
 app.use(error500Middleware);
 
 //стартуем сервер
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.LIBRARY_PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Сервер работает на порту ${PORT}`);
 });
