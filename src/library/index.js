@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const bodyParser = require("body-parser");
+const mongoose = require('mongoose');
 
 //middleware с обработкой ошибок
 const error404Middleware = require('./middleware/error404');
@@ -40,6 +41,27 @@ app.use(error500Middleware);
 
 //стартуем сервер
 const PORT = process.env.LIBRARY_PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер работает на порту ${PORT}`);
-});
+const UserDB = process.env.DB_USERNAME || 'root';
+const PasswordDB = process.env.DB_PASSWORD || 'root';
+const NameDB = process.env.DB_NAME || 'library'
+const HostDb = process.env.DB_HOST || 'mongodb://localhost:27017/'
+
+async function start() {
+    try {
+        await mongoose.connect(HostDb, {
+            user: UserDB,
+            pass: PasswordDB,
+            dbName: NameDB,
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+
+        app.listen(PORT, () => {
+            console.log(`Сервер работает на порту ${PORT}`);
+        })
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+start();

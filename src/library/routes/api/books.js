@@ -3,131 +3,168 @@ const express = require('express');
 const router = express.Router();
 const fileMiddleware = require('../../middleware/file');
 
-const { Book } = require('../../models');
-const store = {
-    books: [],
-};
+const Book = require('../../models/book');
 
-//немного демо-данных для теста
-[1, 2, 3].map(el => {
-    const newBook = new Book(`Book # ${el}`, `description for book # ${el}`);
-    store.books.push(newBook);
+router.get('/', async (req, res) => {
+    const books = await Book.find().select('-__v');
+    res.json(books);
 });
 
-router.get('/', (req, res) => {
-    res.json(store.books);
-});
+router.get('/:id', async (req, res) => {
+    const {id} = req.params;
 
-router.get('/:id', (req, res) => {
-    const { books } = store;
-    const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
-
-    if (idx !== -1) {
-        res.json(books[idx]);
-    } else {
-        res.status(404);
-        res.json({ error: "Такой книги у нас нет!" });
+    try {
+        const book = await Book.findById(id).select('-__v');
+        res.json(book);
+    } catch (e) {
+        console.error(e);
+        res.status(404).json({
+            errrorCode: 404,
+            errorMessage: "Книга не найдена"
+        });
     }
 });
 
 router.post('/', fileMiddleware.fields([
     { name: 'cover-img', maxCount: 1 },
     { name: 'book-file', maxCount: 1 }
-]), (req, res) => {
-    const { books } = store;
+]), async (req, res) => {
     const { title, desc, authors, favorite } = req.body;
 
     if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
-        const newBook = new Book(
-            title, desc, authors, favorite,
-            req.files['cover-img'][0]['path'],
-            req.files['book-file'][0]['path']
-        );
-        books.push(newBook);
 
-        res.status(201);
-        res.json(newBook);
+        const newBook = new Book({
+            title, 
+            description: desc, authors, favorite,
+            fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
+            fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+        });
+
+        try {
+            await newBook.save();
+            res.json(newBook);
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({
+                errrorCode: 500,
+                errorMessage: "Ошибка сохранения данных"
+            });
+        }
+    
     } else {
-        res.status(500);
-        res.json({ error: "Обязательно загрузите хотя бы обложку, файл книги и ее название" });
+        res.status(500).json({
+            errrorCode: 500,
+            errorMessage: "Обязательно загрузите хотя бы обложку, файл книги и ее название"
+        });
     }
 });
 
 router.put('/:id', fileMiddleware.fields([
     { name: 'cover-img', maxCount: 1 },
     { name: 'book-file', maxCount: 1 }
-]), (req, res) => {
-    const { books } = store;
+]), async (req, res) => {
+
     const { title, desc, authors, favorite } = req.body;
     const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
 
-    if (idx !== -1) {
+    //проверяем, что такой объект еще есть (нужно будет удалять старые файлы)
+    try {
+        let book = await Book.findById(id);
+
+        //если загружены новые файлы 
         if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
-            if (books[idx].fileCover) {
-                fs.unlink(books[idx].fileCover, (err => {}));
+            if (book.fileCover) {
+                fs.unlink(book.fileCover, (err => {}));
             }
-            if (books[idx].fileBook) {
-                fs.unlink(books[idx].fileBook, (err => {}));
+            if (book.fileBook) {
+                fs.unlink(book.fileBook, (err => {}));
             }
 
-            books[idx] = {
-                ...books[idx],
-                title,
-                desc,
-                authors,
-                favorite,
-                fileCover: req.files['cover-img'][0]['path'],
-                fileBook: req.files['book-file'][0]['path']
-            };
+            try {
+                await Book.findByIdAndUpdate(id, {
+                    title, 
+                    description: desc, authors, favorite,
+                    fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
+                    fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+                });
 
-            res.json(books[idx]);
+                res.redirect(`/api/books/${id}`);
+            } catch (e) {
+                console.error(e);
+                res.status(500).json({
+                    errrorCode: 500,
+                    errorMessage: "Ошибка обновления данных"
+                });
+            }
+
         } else {
-            res.status(500);
-            res.json({ error: "Обязательно загрузите хотя бы обложку, файл книги и ее название" });
+            res.status(500).json({
+                errrorCode: 500,
+                errorMessage: "Обязательно загрузите хотя бы обложку, файл книги и ее название"
+            });
         }
-
-    } else {
-        res.status(404);
-        res.json({ error: "Такой книги у нас нет!" });
-    }
-});
-
-router.delete('/:id', (req, res) => {
-    const { books } = store;
-    const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
-
-    if (idx !== -1) {
-        if (books[idx].fileCover) {
-            fs.unlink(books[idx].fileCover, (err => {}));
-        }
-        if (books[idx].fileBook) {
-            fs.unlink(books[idx].fileBook, (err => {}));
-        }
-
-        books.splice(idx, 1);
-        res.json("ok");
-    } else {
-        res.status(404);
-        res.json({ error: "Такой книги у нас нет!" });
-    }
-});
-
-router.get('/:id/download', (req, res) => {
-    const { books } = store;
-    const { id } = req.params;
-    const idx = books.findIndex(el => el.id === id);
-
-    if (idx !== -1 && books[idx].fileBook) {
-        res.download(__dirname + '/../' + books[idx].fileBook, books[idx].title + books[idx].fileBook.replace(/.*(\.[a-z0-9]+)$/, "$1"), err => {
-            if (err) {
-                res.status(404).json({ error: "Ошибка выгрузки файла" });
-            }
+    } catch (e) {
+        console.error(e);
+        res.status(404).json({
+            errrorCode: 404,
+            errorMessage: "Книга не найдена"
         });
-    } else {
-        res.status(404).json({ error: "Файл не найден!" });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    
+    //проверяем, что такой объект еще есть, нужно удалить файлы в фс
+    try {
+        let book = await Book.findById(id);
+        
+        if (book.fileCover) {
+            fs.unlink(book.fileCover, (err => {}));
+        }
+        if (book.fileBook) {
+            fs.unlink(book.fileBook, (err => {}));
+        }      
+        
+        try {
+            await Book.deleteOne({_id: id});
+            res.json('ok');
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({
+                error: "Ошибка удаления данных"
+            });
+        }
+
+    } catch (e) {
+        console.error(e);
+        res.status(404).json({
+            errrorCode: 404,
+            errorMessage: "Книга не найдена"
+        });
+    }
+});
+
+router.get('/:id/download', async (req, res) => {
+    const { id } = req.params;
+    try {
+        let book = await Book.findById(id);
+        
+        if(book.fileBook) {
+            res.download(__dirname + '/../' + book.fileBook, book.title + book.fileBook.replace(/.*(\.[a-z0-9]+)$/, "$1"), err => {});
+        }
+        else {
+            res.status(404).json({
+                errrorCode: 404,
+                errorMessage: "Файл книги отсутствует"
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(404).json({
+            errrorCode: 404,
+            errorMessage: "Книга не найдена"
+        });
     }
 
 });

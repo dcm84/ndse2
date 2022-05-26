@@ -1,26 +1,38 @@
 services:
-  storage:
-    image: redis
-  counter:
-    build: 
-      context: .
-      dockerfile: ./Dockerfile-counter
-    ports:
-      - "8001:4001"
+  
+  mongodb:
+    image: mongo
+    restart: always
+    expose:
+      - 27017
     environment:
-      - COUNTER_PORT=4001
-      - REDIS_URL=redis://storage
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME:-root}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD:-password}
+      - MONGO_INITDB_DATABASE=${DB_NAME:-todos_database}
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${DB_USERNAME:-root}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${DB_PASSWORD:-password}
     depends_on:
-      - storage
+      - mongodb
+  
   library:
     build: 
       context: .
       dockerfile: ./Dockerfile-library
     ports:
-      - "8000:4000"
+      - 8000:4000
     environment:
       - LIBRARY_PORT=4000
-      - COUNTER_PORT=4001
-      - COUNTER_URL=http://counter
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-todos_database}
+      - DB_HOST=mongodb://mongodb:27017
     depends_on:
-      - counter
+      - mongodb
