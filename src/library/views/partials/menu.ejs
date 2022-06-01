@@ -13,6 +13,19 @@
             <li class="nav-item">
                 <a class="nav-link" href="/books">books</a>
             </li>
+
+            <% if (authUser) { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/me">Профиль</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/logout">Выйти</a>
+                </li>
+            <% } else { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/login">Войти</a>
+                </li>
+            <% } %>
         </ul>
     </div>
 </nav>

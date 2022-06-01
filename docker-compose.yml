@@ -3,12 +3,12 @@ services:
   mongodb:
     image: mongo
     restart: always
-    expose:
-      - 27017
+    ports:
+      - 27017:27017
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME:-root}
       - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD:-password}
-      - MONGO_INITDB_DATABASE=${DB_NAME:-todos_database}
+      - MONGO_INITDB_DATABASE=${DB_NAME:-library_database}
 
   mongo-express:
     image: mongo-express
@@ -32,7 +32,8 @@ services:
       - LIBRARY_PORT=4000
       - DB_USERNAME=${DB_USERNAME:-root}
       - DB_PASSWORD=${DB_PASSWORD:-password}
-      - DB_NAME=${DB_NAME:-todos_database}
+      - DB_NAME=${DB_NAME:-library_database}
       - DB_HOST=mongodb://mongodb:27017
+      - COOKIE_SECRET=${COOKIE_SECRET:-123123123}
     depends_on:
       - mongodb
