@@ -1,12 +1,14 @@
 //нельзя использовать два мультера в одном роуте, поэтому такой грустный код:(
 const multer = require('multer');
+const path = require('path')
 
 const storage = multer.diskStorage({
     destination(req, file, cb) {
         if (file.fieldname === "cover-img") {
-            cb(null, 'public/covers/');
+            //из-за того, что проект уехал в src/library
+            cb(null, path.join(__dirname, '../public/covers/'));
         } else {
-            cb(null, 'public/books/');
+            cb(null, path.join(__dirname, '../public/books/'));
         }
     },
     filename(req, file, cb) {
@@ -24,6 +26,7 @@ const fileFilter = (req, file, cb) => {
     } else if (file.fieldname === "book-file" && allowedBooksTypes.includes(file.mimetype)) {
         cb(null, true)
     } else {
+        console.log("file is unsuitable")
         cb(null, false)
     }
 };

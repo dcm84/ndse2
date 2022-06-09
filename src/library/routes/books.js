@@ -4,6 +4,7 @@ const router = express.Router();
 const fileMiddleware = require('../middleware/file');
 
 const Book = require('../models/book');
+const Comment = require('../models/comment');
 
 router.get('/', async (req, res) => {
     const books = await Book.find();
@@ -25,6 +26,7 @@ router.post('/create', fileMiddleware.fields([
     { name: 'book-file', maxCount: 1 }
 ]), async (req, res) => {
 
+    console.log(req.files)
     const { title, desc, authors, favorite } = req.body;
 
     if ('cover-img' in req.files && 'book-file' in req.files && title.trim() != "") {
@@ -32,8 +34,8 @@ router.post('/create', fileMiddleware.fields([
         const newBook = new Book({
             title, 
             description: desc, authors, favorite,
-            fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
-            fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+            fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
+            fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
         });
 
         try {
@@ -56,9 +58,11 @@ router.post('/create', fileMiddleware.fields([
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     let book
+    let comments
 
     try {
         book = await Book.findById(id);
+        comments = await Comment.find({bookID: id})
     } catch (e) {
         console.error(e);
         res.status(404).redirect('/404');
@@ -66,7 +70,9 @@ router.get('/:id', async (req, res) => {
 
     res.render("books/view", {
         title: "Просмотр информации о книге",
-        book
+        book,
+        user: req.user ? req.user : null,
+        comments
     });
 });
 
@@ -112,8 +118,8 @@ router.post('/update/:id', fileMiddleware.fields([
                 await Book.findByIdAndUpdate(id, {
                     title, 
                     description: desc, authors, favorite,
-                    fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
-                    fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+                    fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
+                    fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
                 });
 
                 res.redirect(`/books/${id}`);
@@ -151,6 +157,8 @@ router.post('/delete/:id', async (req, res) => {
         }      
         
         try {
+            //при удалении книги, удалим и комментарии к ней
+            await Comment.deleteMany({bookID: id});
             await Book.deleteOne({_id: id});
             res.redirect('/books');
 

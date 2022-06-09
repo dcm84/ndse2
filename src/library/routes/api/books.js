@@ -36,8 +36,8 @@ router.post('/', fileMiddleware.fields([
         const newBook = new Book({
             title, 
             description: desc, authors, favorite,
-            fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
-            fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+            fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
+            fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
         });
 
         try {
@@ -84,8 +84,8 @@ router.put('/:id', fileMiddleware.fields([
                 await Book.findByIdAndUpdate(id, {
                     title, 
                     description: desc, authors, favorite,
-                    fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/'),
-                    fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/')
+                    fileCover: req.files['cover-img'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
+                    fileBook: req.files['book-file'][0]['path'].replaceAll(/[\\]+/g, '/').replaceAll(/.*?\/src\/[^/]+\//g, ''),
                 });
 
                 res.redirect(`/api/books/${id}`);
