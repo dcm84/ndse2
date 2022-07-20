@@ -5,8 +5,16 @@ const fileMiddleware = require('../../middleware/file');
 
 const Book = require('../../models/book');
 
+import { IBooksRepository } from "../../interfaces/IBooksRepository";
+import {container} from "../../infrastructure/container"
+
 router.get('/', async (req, res) => {
-    const books = await Book.find().select('-__v');
+    //стало:
+    const repo = container.get(IBooksRepository);
+    const books = await repo.getBooks();
+
+    //было:
+    //const books = await Book.find().select('-__v');
     res.json(books);
 });
 

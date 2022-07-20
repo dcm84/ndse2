@@ -35,10 +35,12 @@
         "ejs": "^3.1.8",
         "express": "^4.18.1",
         "express-session": "^1.17.3",
+        "inversify": "^6.0.1",
         "mongoose": "^6.3.4",
         "multer": "^1.4.4",
         "passport": "^0.6.0",
         "passport-local": "^1.0.0",
+        "reflect-metadata": "^0.1.13",
         "socket.io": "^4.5.1"
     }
 }
